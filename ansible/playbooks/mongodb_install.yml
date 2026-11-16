@@ -1,0 +1,66 @@
+
+---
+- name: Install MongoDB on private database EC2
+  hosts: database
+  become: yes
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - gnupg
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Download MongoDB signing key
+      ansible.builtin.get_url:
+        url: https://pgp.mongodb.com/server-8.0.asc
+        dest: /tmp/mongodb-server-8.0.asc
+        mode: '0644'
+
+    - name: Convert MongoDB key to keyring format
+      ansible.builtin.command:
+        cmd: gpg --dearmor --yes --output /usr/share/keyrings/mongodb-server-8.0.gpg /tmp/mongodb-server-8.0.asc
+        creates: /usr/share/keyrings/mongodb-server-8.0.gpg
+
+    - name: Add MongoDB 8.0 repository
+      ansible.builtin.deb822_repository:
+        name: mongodb-org-8.0
+        types:
+          - deb
+        uris:
+          - https://repo.mongodb.org/apt/ubuntu
+        suites:
+          - noble/mongodb-org/8.0
+        components:
+          - multiverse
+        architectures:
+          - amd64
+        signed_by: /usr/share/keyrings/mongodb-server-8.0.gpg
+        state: present
+
+    - name: Install MongoDB
+      ansible.builtin.apt:
+        name: mongodb-org
+        state: present
+        update_cache: yes
+
+    - name: Enable and start MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: started
+        enabled: yes
+
+    - name: Allow MongoDB connections from localhost and private IP
+      ansible.builtin.lineinfile:
+        path: /etc/mongod.conf
+        regexp: '^\s*bindIp:'
+        line: '  bindIp: 127.0.0.1,10.0.2.246'
+      notify: Restart MongoDB
+
+  handlers:
+    - name: Restart MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted

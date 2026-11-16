@@ -1,0 +1,43 @@
+---
+- name: Build and deploy TravelMemory frontend
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Create frontend production environment file
+      ansible.builtin.copy:
+        dest: /home/ubuntu/TravelMemory/frontend/.env.production
+        content: |
+          REACT_APP_BACKEND_URL=http://{{ web_public_ip }}
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
+
+    - name: Install frontend dependencies
+      ansible.builtin.command: npm ci
+      args:
+        chdir: /home/ubuntu/TravelMemory/frontend
+      become: no
+
+    - name: Build React frontend
+      ansible.builtin.command: npm run build
+      args:
+        chdir: /home/ubuntu/TravelMemory/frontend
+      become: no
+
+    - name: Create Nginx frontend directory
+      ansible.builtin.file:
+        path: /var/www/travelmemory
+        state: directory
+        owner: root
+        group: www-data
+        mode: '0755'
+
+    - name: Copy React build to Nginx directory
+      ansible.builtin.copy:
+        src: /home/ubuntu/TravelMemory/frontend/build/
+        dest: /var/www/travelmemory/
+        remote_src: yes
+        owner: root
+        group: www-data
+        mode: 'preserve'

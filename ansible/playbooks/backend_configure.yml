@@ -1,0 +1,30 @@
+---
+- name: Configure TravelMemory backend environment
+  hosts: web
+  become: yes
+  vars_files:
+    - ../inventory/group_vars/database/vault.yml
+  tasks:
+    - name: Create backend uploads directory
+      ansible.builtin.file:
+        path: /home/ubuntu/TravelMemory/backend/uploads
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Create production environment file
+      ansible.builtin.copy:
+        dest: /home/ubuntu/TravelMemory/backend/.env
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+        content: |
+          MONGO_URI=mongodb://{{ mongodb_app_user | urlencode }}:{{ mongodb_app_password | urlencode }}@10.0.2.246:27017/travelmemory?authSource=travelmemory
+          PORT=3001
+          CORS_ORIGIN=http://{{ web_public_ip }}
+          UPLOAD_DIR=uploads
+          MAX_UPLOAD_MB=5
+          TRUST_PROXY=1
+          NODE_ENV=production
+      no_log: true

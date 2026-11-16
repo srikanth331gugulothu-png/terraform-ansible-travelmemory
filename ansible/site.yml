@@ -1,0 +1,27 @@
+---
+- name: Configure web server
+  ansible.builtin.import_playbook: playbooks/web_setup.yaml
+
+- name: Upgrade Node.js
+  ansible.builtin.import_playbook: playbooks/nodejs_upgrade.yml
+
+- name: Clone TravelMemory application
+  ansible.builtin.import_playbook: playbooks/clone_app.yaml
+
+- name: Install MongoDB
+  ansible.builtin.import_playbook: playbooks/mongodb_install.yml
+
+- name: Secure MongoDB
+  ansible.builtin.import_playbook: playbooks/mongodb_security.yml
+
+- name: Configure backend
+  ansible.builtin.import_playbook: playbooks/backend_configure.yml
+
+- name: Configure backend service
+  ansible.builtin.import_playbook: playbooks/backend_service.yml
+
+- name: Deploy frontend
+  ansible.builtin.import_playbook: playbooks/frontend_deploy.yml
+
+- name: Deploy Nginx configuration
+  ansible.builtin.import_playbook: playbooks/nginx_deploy.yml

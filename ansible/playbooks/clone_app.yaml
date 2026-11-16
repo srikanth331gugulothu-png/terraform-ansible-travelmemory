@@ -1,0 +1,14 @@
+
+---
+- name: Clone TravelMemory application
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Clone TravelMemory GitHub repository
+      ansible.builtin.git:
+        repo: https://github.com/UnpredictablePrashant/TravelMemory.git
+        dest: /home/ubuntu/TravelMemory
+        version: main
+        update: false
+      become_user: ubuntu

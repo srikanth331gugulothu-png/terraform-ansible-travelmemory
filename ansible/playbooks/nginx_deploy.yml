@@ -1,0 +1,34 @@
+---
+- name: Configure Nginx for TravelMemory
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: Copy TravelMemory Nginx configuration
+      ansible.builtin.copy:
+        src: ../nginx-travelmemory.conf
+        dest: /etc/nginx/sites-available/travelmemory
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable TravelMemory Nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/travelmemory
+        dest: /etc/nginx/sites-enabled/travelmemory
+        state: link
+
+    - name: Remove default Nginx site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Test Nginx configuration
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+    - name: Enable and reload Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded
+        enabled: yes

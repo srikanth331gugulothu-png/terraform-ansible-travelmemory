@@ -1,0 +1,38 @@
+---
+- name: Configure TravelMemory web server
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Update Ubuntu package cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install Nginx
+      ansible.builtin.apt:
+        name:
+          - nginx
+        state: present
+
+    - name: Start and enable Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Check Node.js version
+      ansible.builtin.command: node --version
+      register: node_version
+      changed_when: false
+
+    - name: Check npm version
+      ansible.builtin.command: npm --version
+      register: npm_version
+      changed_when: false
+
+    - name: Display installed versions
+      ansible.builtin.debug:
+        msg:
+          - "Node.js: {{ node_version.stdout }}"
+          - "npm: {{ npm_version.stdout }}"

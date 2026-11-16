@@ -1,0 +1,45 @@
+# AWS credentials and private keys
+*.pem
+*.key
+.aws/
+credentials
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+vault.yml
+vault.yaml
+vault-password*
+*.secret
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ansible
+*.retry
+ansible.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+ansible/inventory/hosts.ini
+
+# Local Ansible variables
+ansible/inventory/group_vars/web.yml

@@ -1,0 +1,67 @@
+
+---
+- name: Secure MongoDB and create TravelMemory users
+  hosts: database
+  become: yes
+
+  tasks:
+    - name: Create temporary MongoDB user setup script
+      ansible.builtin.copy:
+        dest: /tmp/mongodb-bootstrap.js
+        owner: root
+        group: root
+        mode: '0600'
+        content: |
+          const adminUser = {{ mongodb_admin_user | to_json }};
+          const adminPassword = {{ mongodb_admin_password | to_json }};
+          const appUser = {{ mongodb_app_user | to_json }};
+          const appPassword = {{ mongodb_app_password | to_json }};
+
+          const adminDb = db.getSiblingDB("admin");
+
+          if (!adminDb.getUser(adminUser)) {
+            adminDb.createUser({
+              user: adminUser,
+              pwd: adminPassword,
+              roles: [{ role: "root", db: "admin" }]
+            });
+          }
+
+          const appDb = db.getSiblingDB("travelmemory");
+
+          if (!appDb.getUser(appUser)) {
+            appDb.createUser({
+              user: appUser,
+              pwd: appPassword,
+              roles: [{ role: "readWrite", db: "travelmemory" }]
+            });
+          }
+      no_log: true
+
+    - name: Create MongoDB administrator and application users
+      ansible.builtin.shell:
+        cmd: |
+          mongosh --host 127.0.0.1 --quiet /tmp/mongodb-bootstrap.js &&
+          touch /var/lib/mongodb/.travelmemory-users-created
+        creates: /var/lib/mongodb/.travelmemory-users-created
+      no_log: true
+
+    - name: Remove temporary MongoDB setup script
+      ansible.builtin.file:
+        path: /tmp/mongodb-bootstrap.js
+        state: absent
+
+    - name: Enable MongoDB authorization
+      ansible.builtin.blockinfile:
+        path: /etc/mongod.conf
+        marker: "# {mark} ANSIBLE MANAGED MONGODB AUTHORIZATION"
+        block: |
+          security:
+            authorization: enabled
+      notify: Restart MongoDB
+
+  handlers:
+    - name: Restart MongoDB
+      ansible.builtin.systemd:
+        name: mongod
+        state: restarted

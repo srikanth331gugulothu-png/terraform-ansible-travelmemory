@@ -1,0 +1,5 @@
+[web]
+web-server ansible_host=YOUR_WEB_PUBLIC_IP ansible_user=ubuntu
+
+[database]
+database-server ansible_host=YOUR_DATABASE_PRIVATE_IP ansible_user=ubuntu
